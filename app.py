@@ -9,7 +9,7 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="Cricket Analytics Hub",
+    page_title="ZENMINDS Analytics Hub",
     page_icon="🏏",
     layout="wide",
     initial_sidebar_state="expanded"
