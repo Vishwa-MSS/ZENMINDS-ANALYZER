@@ -1,0 +1,27 @@
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate        # Linux/Mac
+venv\Scripts\activate          # Windows
+
+# Install all packages
+pip install -r requirements.txt
+
+streamlit run app.py
+
+python app.py
+
+
+
+
+
+See, Now I have a major update in my app, As of now it is only for Andhra priemer league, I want to update this and make it a global analyzer tool consist of different franchise leagues, as as a start, i will upload a dataset of maharaja priemer league 2025, which has the same attributes as apl dataset, so in the modules,there would be no changes, because it is a same dataset with different data, i have given u the dataset also, 
+
+Now, How I want the whole  
+
+Hello , now I want the whole analyzer tool to be ready that user enters into the website and he sees a front page which consists of multiple options in cards like Andhra Premier League, maharaja Premier League. This, as of now, we started with only two leagues. In future, I will add for the other leagues also. Now you should just have this CA, these CAs alone. After that, once you enter inside, if I click, the user clicks Andhra Premier League, then it should ask for a password. Username, no, only password, no username for this page to next page. Enter a password. For APL, that's a separate password and maharaja Premier League, that's a separate password. I will tell you what password to give in this later. Give that. Okay, give this password for each.for apl - "APL@#zenminds"  , maharaja league = "MPL@#zenminds" Keep this password for APL and Maharaja Premier League. So if user enters this password correctly, then it moves into the already existing login pages. If user clicks Maharaja Premier League, then it should have, it should go into the Maharaja Premier League page. So I need you to create the same thing, like what you have already created for Anza Premier League. I want the same thing to be created for Maharaja Premier League entire. So basically, as I told, if he presses APL, it should navigate into that APL dashboard. If he presses Maharaja Premier League, it should navigate into Maharaja Premier League analytical dashboard. Which should consist the entire same thing what the APL does have. But it should have the title as Karnataka Premier League, etc. etc. And another filter in the Another filter of year should be added. So as of now, only I have data for 2025. In future, I will add the data. So according to that, you need to update it. So this is the whole change. Please do this whole change and give me the updated files, okay? I guess you understand. I need the updated files so that it looks a global analyzer tool rather than for a specific tournament alone., please do these things and give me the updated code files and also the updated folder architecture, and also tell me if any new code files to be added, i will share the existing folder architecture also 
+
+
+
+
+
+See, Iam making this dashboard for both team owners and coaches, coaches can understand , but owners cannot understand so, for them i need a new tab (module) to be added , named report, which should not consist of any charts, it should have a detailed report with key points in a very interactive manner with various cards , etc, should be interactive , and the report should be based on all other charts in other tabs, so based on those charts, give me the report tab,also that report can be downloadable in pdf format. that report should be very much good such that owners can understand the strengths and weakness of their team, basically it should be a reported summary of the season . And also make sure, under the admin login, the reports of all the teams should be present, where admin can see one by one, but under the team user login, the report of that particular team should only be present, one team's owner should not see others stats or report, please make this updated and give me the updated codes .

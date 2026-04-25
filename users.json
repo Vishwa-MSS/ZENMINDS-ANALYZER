@@ -1,0 +1,8 @@
+{
+    "admin": {
+        "name": "Administrator",
+        "password": "$2b$12$l0rNZSMtg/EzjBVczv9bluVo3AVM0z8VRD9iZbkZ3DQUAaJ5zDG0W",
+        "team": "ALL",
+        "role": "admin"
+    }
+}
