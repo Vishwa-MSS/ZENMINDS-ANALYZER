@@ -9,7 +9,7 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="ZENMINDS Analytics Hub",
+    page_title="Cricket Analytics Hub",
     page_icon="🏏",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -37,21 +37,50 @@ if 'role' not in st.session_state:
 if 'assigned_team' not in st.session_state:
     st.session_state.assigned_team = None
 
-def load_league_data(league_code):
-    """Load data for selected league"""
+def load_league_data(league_code, selected_years=None):
+    """Load data for selected league and years"""
+    from config_leagues import get_league_config, get_available_years
+    
     league_config = get_league_config(league_code)
     if not league_config:
         st.error(f"League configuration not found for: {league_code}")
         return None
     
-    data_path = os.path.join(os.path.dirname(__file__), league_config['data_file'])
+    data_folder = league_config['data_folder']
     
-    if not os.path.exists(data_path):
-        st.error(f"Data file not found: {league_config['data_file']}")
+    if not os.path.exists(data_folder):
+        st.error(f"Data folder not found: {data_folder}")
+        return None
+    
+    # If no years selected, return empty dataframe structure
+    if not selected_years or len(selected_years) == 0:
+        st.warning("Please select at least one year to view data")
         return None
     
     try:
-        df = pd.read_csv(data_path)
+        all_dataframes = []
+        
+        # Load data for each selected year
+        for year in selected_years:
+            file_path = os.path.join(data_folder, f"{league_config['short_name']}_{year}.csv")
+            
+            if not os.path.exists(file_path):
+                st.warning(f"Data file not found for year {year}: {file_path}")
+                continue
+            
+            df = pd.read_csv(file_path)
+            
+            # Add year column
+            df['season_year'] = year
+            
+            all_dataframes.append(df)
+        
+        if len(all_dataframes) == 0:
+            st.error("No data files found for selected years")
+            return None
+        
+        # Combine all years
+        df = pd.concat(all_dataframes, ignore_index=True)
         
         # Standardize column names - strip whitespace
         df.columns = df.columns.str.strip()
@@ -136,13 +165,33 @@ def main():
         league_code = st.session_state.selected_league
         league_config = get_league_config(league_code)
         
-        df = load_league_data(league_code)
+        # Get available years and update config
+        from config_leagues import update_available_years
+        update_available_years()
+        
+        available_years = league_config.get('available_years', [])
+        
+        if not available_years:
+            st.error(f"No data files found in {league_config['data_folder']}")
+            st.info(f"Please ensure CSV files are named as: {league_config['short_name']}_YYYY.csv")
+            if st.button("← Back to League Selection"):
+                st.session_state.page = 'league_selector'
+                st.session_state.authenticated = False
+                st.session_state.league_authenticated = False
+                st.rerun()
+            return
+        
+        # Initialize selected years in session state
+        if 'selected_years' not in st.session_state:
+            st.session_state.selected_years = [available_years[0]] if available_years else []
+        
+        # Load data for selected years
+        df = load_league_data(league_code, st.session_state.selected_years)
         
         if df is not None:
             # Show dashboard with league-specific branding
-            filter_dashboard(df, league_config)
+            filter_dashboard(df, league_config, available_years)
         else:
-            st.error("Failed to load league data")
             if st.button("← Back to League Selection"):
                 st.session_state.page = 'league_selector'
                 st.session_state.authenticated = False

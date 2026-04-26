@@ -106,10 +106,16 @@ def show_league_auth():
         
         # Info
         st.markdown("---")
+        
+        # Get available years for display
+        from config_leagues import get_available_years
+        available_years = get_available_years(league_code)
+        years_text = ', '.join(map(str, available_years)) if available_years else "Available upon login"
+        
         st.info(f"""
         **📋 League Information:**
         - **Teams:** {len(league_config['teams'])} teams
-        - **Season:** {', '.join(league_config['years'])}
+        - **Seasons Available:** {years_text}
         - **Status:** Active
         
         🔒 Contact your league administrator for access credentials.

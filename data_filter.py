@@ -167,7 +167,7 @@ def apply_global_filters(df, selected_teams, selected_matches):
     return filtered_df
 
 
-def filter_dashboard(df, league_config):
+def filter_dashboard(df, league_config, available_years=None):
     """
     Main dashboard rendering function with league-specific branding
     """
@@ -236,6 +236,34 @@ def filter_dashboard(df, league_config):
             </p>
         </div>
     """, unsafe_allow_html=True)
+    
+    # Year Filter (NEW)
+    if available_years and len(available_years) > 0:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 📅 Season Filter")
+        
+        # Multi-select for years
+        selected_years = st.sidebar.multiselect(
+            "Select Season(s):",
+            options=available_years,
+            default=st.session_state.get('selected_years', [available_years[0]]),
+            key="year_filter",
+            help="Select one or multiple seasons to analyze"
+        )
+        
+        # Update session state and reload data if years changed
+        if selected_years != st.session_state.get('selected_years', []):
+            st.session_state.selected_years = selected_years
+            st.rerun()
+        
+        # Display selected years info
+        if len(selected_years) > 1:
+            st.sidebar.info(f"📊 Comparing {len(selected_years)} seasons: {', '.join(map(str, selected_years))}")
+        elif len(selected_years) == 1:
+            st.sidebar.success(f"📊 Viewing season: {selected_years[0]}")
+        else:
+            st.sidebar.warning("⚠️ Please select at least one season")
+            return
     
     # Global filters
     selected_teams, selected_matches = render_global_filters(data_filter, key_prefix="main")

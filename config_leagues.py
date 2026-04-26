@@ -6,7 +6,7 @@ LEAGUES = {
         'short_name': 'APL',
         'password': 'APL@#zenminds',
         'logo': 'apl_logo.png',
-        'data_file': 'APL_2025_LeagueData.csv',
+        'data_folder': 'data/APL',  # Folder containing year-wise CSV files
         'color_primary': '#667eea',
         'color_secondary': '#764ba2',
         'teams': [
@@ -18,14 +18,14 @@ LEAGUES = {
             'Tungabhadra Warriors',
             'Vijayawada Sun Shiners'
         ],
-        'years': ['2025']  # Will expand in future
+        'available_years': []  # Will be auto-detected from folder
     },
     'MPL': {
         'name': 'Maharaja Premier League',
         'short_name': 'MPL',
         'password': 'MPL@#zenminds',
         'logo': 'mpl_logo.png',
-        'data_file': 'maharaja_bbb_final.csv',
+        'data_folder': 'data/MPL',  # Folder containing year-wise CSV files
         'color_primary': '#f093fb',
         'color_secondary': '#f5576c',
         'teams': [
@@ -36,7 +36,7 @@ LEAGUES = {
             'Mysore Warriors',
             'Shivamogga Lions'
         ],
-        'years': ['2025']  # Will expand in future
+        'available_years': []  # Will be auto-detected from folder
     }
 }
 
@@ -63,3 +63,33 @@ def validate_league_password(league_code, password):
     if league:
         return league['password'] == password
     return False
+
+def get_available_years(league_code):
+    """Auto-detect available years from data folder"""
+    import os
+    import re
+    
+    league = LEAGUES.get(league_code)
+    if not league:
+        return []
+    
+    data_folder = league['data_folder']
+    if not os.path.exists(data_folder):
+        return []
+    
+    years = []
+    # Look for files like APL_2024.csv, APL_2025.csv, MPL_2024.csv, etc.
+    pattern = re.compile(rf"{league['short_name']}_(\d{{4}})\.csv", re.IGNORECASE)
+    
+    for filename in os.listdir(data_folder):
+        match = pattern.match(filename)
+        if match:
+            year = int(match.group(1))
+            years.append(year)
+    
+    return sorted(years, reverse=True)  # Most recent first
+
+def update_available_years():
+    """Update available years for all leagues"""
+    for league_code in LEAGUES.keys():
+        LEAGUES[league_code]['available_years'] = get_available_years(league_code)
