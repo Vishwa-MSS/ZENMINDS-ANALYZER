@@ -56,7 +56,9 @@ class DataFilter:
     
     def get_available_matches(self, selected_teams=None):
         """
-        Get list of available match numbers based on user role and selected teams.
+        Get list of available match numbers/identifiers based on user role and selected teams.
+        Handles both numeric and string match identifiers (for playoffs).
+        Excludes match 0.
         """
         filtered_data = self.get_filtered_data()
         
@@ -67,8 +69,40 @@ class DataFilter:
                 (filtered_data['team2_battingsecond'].isin(selected_teams))
             ]
         
-        matches = sorted(filtered_data['match_no'].unique())
-        return matches
+        # Get unique matches
+        matches = filtered_data['match_no'].unique()
+        
+        # Filter and sort
+        filtered_matches = []
+        numeric_matches = []
+        string_matches = []
+        
+        for m in matches:
+            # Skip match 0
+            if isinstance(m, (int, float)) and m <= 0:
+                continue
+            
+            # Separate numeric and string matches
+            try:
+                num_val = int(m)
+                numeric_matches.append(num_val)
+            except (ValueError, TypeError):
+                string_matches.append(str(m))
+        
+        # Sort numeric matches
+        filtered_matches = sorted(numeric_matches)
+        
+        # Add string matches in specific order (playoffs)
+        playoff_order = ['Qualifier 1', 'Eliminator', 'Qualifier 2', 'Final']
+        for playoff in playoff_order:
+            matching = [s for s in string_matches if s.lower().replace(' ', '') == playoff.lower().replace(' ', '')]
+            filtered_matches.extend(matching)
+        
+        # Add any remaining string matches
+        remaining = [s for s in string_matches if s not in filtered_matches]
+        filtered_matches.extend(sorted(remaining))
+        
+        return filtered_matches
     
     def apply_match_filter(self, df, selected_matches):
         """Apply match number filter to dataframe"""
@@ -125,14 +159,63 @@ def render_global_filters(data_filter, key_prefix=""):
     available_matches = data_filter.get_available_matches(selected_teams)
     
     st.sidebar.markdown("### 🎮 Select Matches")
-    selected_matches = st.sidebar.multiselect(
+    
+    # Format match labels
+    def format_match_label(match_identifier):
+        """Format match identifier into readable label"""
+        # Handle string playoffs
+        if isinstance(match_identifier, str):
+            if match_identifier.lower() in ['qualifier 1', 'qualifier1', 'q1']:
+                return "🏆 Qualifier 1"
+            elif match_identifier.lower() in ['qualifier 2', 'qualifier2', 'q2']:
+                return "🏆 Qualifier 2"
+            elif match_identifier.lower() in ['eliminator', 'elimination']:
+                return "⚡ Eliminator"
+            elif match_identifier.lower() in ['final', 'finals']:
+                return "🏅 Final"
+            else:
+                return match_identifier  # Return as is if unrecognized
+        
+        # Handle numeric matches
+        try:
+            match_no = int(match_identifier)
+            if match_no <= 0:
+                return None  # Skip match 0
+            elif match_no > 100:  # Playoff matches (numeric format)
+                if match_no == 101:
+                    return f"🏆 Qualifier 1 (Match {match_no})"
+                elif match_no == 102:
+                    return f"⚡ Eliminator (Match {match_no})"
+                elif match_no == 103:
+                    return f"🏆 Qualifier 2 (Match {match_no})"
+                elif match_no == 104:
+                    return f"🏅 Final (Match {match_no})"
+                else:
+                    return f"🏆 Playoff (Match {match_no})"
+            else:
+                return f"Match {match_no}"
+        except (ValueError, TypeError):
+            return str(match_identifier)
+    
+    # Create formatted options (filter out None values)
+    match_options = {}
+    for m in available_matches:
+        label = format_match_label(m)
+        if label:  # Only add if not None
+            match_options[label] = m
+    
+    selected_match_labels = st.sidebar.multiselect(
         "Choose matches (leave empty for all)",
-        options=available_matches,
+        options=list(match_options.keys()),
         default=[],
-        key=f"{key_prefix}_match_filter"
+        key=f"{key_prefix}_match_filter",
+        help="Select specific matches to analyze. Leave empty to include all matches."
     )
     
-    if not selected_matches:
+    # Convert labels back to match identifiers
+    if selected_match_labels:
+        selected_matches = [match_options[label] for label in selected_match_labels]
+    else:
         selected_matches = available_matches  # If none selected, show all
     
     # Display filter summary
@@ -172,7 +255,7 @@ def filter_dashboard(df, league_config, available_years=None):
     Main dashboard rendering function with league-specific branding
     """
     import streamlit as st
-    from modules import batting_module, bowling_module, partnerships_module, extras_module, wides_module, report_module
+    from modules import batting_module, bowling_module, partnerships_module, extras_module, wides_module, report_module, player_stats_module
     
     # Get league branding
     league_name = league_config['name']
@@ -322,13 +405,14 @@ def filter_dashboard(df, league_config, available_years=None):
         return  # Don't show dashboard tabs when in user management
     
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "🏏 Batting",
         "🎯 Bowling", 
         "🤝 Partnerships",
         "➕ Extras",
         "📊 Wides",
-        "📋 Report"
+        "📋 Report",
+        "👥 Player Stats"
     ])
     
     with tab1:
@@ -348,3 +432,6 @@ def filter_dashboard(df, league_config, available_years=None):
     
     with tab6:
         report_module.render_report_dashboard(final_data, selected_teams, selected_matches)
+    
+    with tab7:
+        player_stats_module.render_player_stats_dashboard(final_data, selected_teams, selected_matches)

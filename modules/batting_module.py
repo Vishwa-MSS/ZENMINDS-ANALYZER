@@ -48,6 +48,16 @@ def render_batting_dashboard(df, selected_teams, selected_matches):
     # =========================
     st.sidebar.markdown("### 🎯 Batting Filters")
     
+    # Team filter
+    all_teams = sorted(filtered_df['batting_team'].unique())
+    selected_batting_teams = st.sidebar.multiselect(
+        "Select Team(s)",
+        options=all_teams,
+        default=all_teams,
+        key="batting_team_filter",
+        help="Select specific teams to analyze"
+    )
+    
     phase = st.sidebar.selectbox(
         "Select Phase",
         ["Powerplay", "Middle Overs (7-15)", "Middle Overs 1", "Middle Overs 2", "Death Overs", "Entire Innings"],
@@ -64,6 +74,10 @@ def render_batting_dashboard(df, selected_teams, selected_matches):
     # APPLY TAB FILTERS
     # =========================
     tab_filtered_df = filtered_df.copy()
+    
+    # Apply team filter
+    if selected_batting_teams:
+        tab_filtered_df = tab_filtered_df[tab_filtered_df['batting_team'].isin(selected_batting_teams)]
     
     if phase != "Entire Innings":
         tab_filtered_df = tab_filtered_df[tab_filtered_df['phase'] == phase]
@@ -143,10 +157,13 @@ def render_batting_dashboard(df, selected_teams, selected_matches):
     # =========================
     # PLAYER TABLE
     # =========================
-    if selected_teams and len(selected_teams) == 1:
-        st.subheader(f"📋 Player Stats - {selected_teams[0]}")
+    if selected_batting_teams and len(selected_batting_teams) == 1:
+        st.subheader(f"📋 Player Stats - {selected_batting_teams[0]}")
         
-        player_stats = tab_filtered_df.groupby('batsman').agg(
+        # Filter for the specific team's batting data
+        team_batting_df = tab_filtered_df[tab_filtered_df['batting_team'] == selected_batting_teams[0]]
+        
+        player_stats = team_batting_df.groupby('batsman').agg(
             runs=('runs_offbat', 'sum'),
             balls=('ball', 'count'),
             dismissals=('is_wicket', 'sum')
@@ -161,6 +178,8 @@ def render_batting_dashboard(df, selected_teams, selected_matches):
             st.dataframe(player_stats, use_container_width=True)
         else:
             st.warning("No players with minimum 10 balls")
+    elif selected_batting_teams and len(selected_batting_teams) > 1:
+        st.info("💡 Select a single team to view detailed player statistics")
     
     # =========================
     # PACE & SPIN ANALYSIS
